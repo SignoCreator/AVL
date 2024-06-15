@@ -1,18 +1,18 @@
 #include "network.h"
 #include <string>
 #include "list-array.h"
-#include "AVL.h"
+#include "AVL/AVL.h"
 using namespace std;
 using namespace list;
 
 using namespace AVL;
 
-
+#define EMPTY_USR_LOG "" // this makes the code more readable
 namespace network{
-#define EMPTY_USR_LOG ""
+
     struct st_Network;
-    using User_ID = string;
-    using Group_ID = string;
+    using User_ID = string; // if I want to change the type of User_ID, I just need to change it here
+    using Group_ID = string; // if I want to change the type of Group_ID, I just need to change it here
 
     struct userStruct;
     struct groupStruct;
@@ -21,8 +21,8 @@ namespace network{
     typedef st_Network* Network;
 
 
-    typedef AVLTree<User_ID, User> Users;
-    typedef AVLTree<Group_ID, Group> Groups;
+    typedef AVLTree<User_ID, User> Users; // users are represented by an AVLTree
+    typedef AVLTree<Group_ID, Group> Groups; // groups are represented by an AVLTree
     struct st_Network{
         Users members;
         Groups groups;
@@ -30,24 +30,26 @@ namespace network{
 
     typedef AVLTree<User_ID, User> Friendships;
     struct userStruct{
-        User_ID user_Login;
-        Friendships friends;
+        User_ID user_Login; // user_Login is the unique identifier of the user
+        Friendships friends; // friends are represented by an AVLTree
     };
 
     struct groupStruct{
-        User creator;
-        Users members;
+        User creator; // the creator of the group
+        Users members; // the members of the group
     };
+
+
     /**********************************************************************/
-    /*               Funzione da implementare                             */
+    /*               Funzione ausiliaria                                  */
     /**********************************************************************/
-
-    // NB: - ogni membro (utente del social network) e' contraddistinto univocamente
-    //           da un user_Login rappresentato con una stringa
-    //     - ogni gruppo (gruppo di utenti del social network) e' contraddistinto
-    //           univocamente da un group_Name rappresentato con una stringa
-
-
+   
+    /**
+     * This function checks if a string is alphabetic, that is, if it contains only letters
+     * 
+     * @param s the string to check
+     * @return true if the string is alphabetic, false otherwise
+     */
     bool isAlphabetic(string s){ // 0(n)
         for(char c : s) {
             if (('a' > c || c > 'z') && ('A' > c || c > 'Z'))
@@ -55,7 +57,67 @@ namespace network{
         }
         return true;
     }
-    // Ritorna una network vuota
+    
+    /**
+     * This function checks if two strings are equal
+     * 
+     * @param s1 the first string
+     * @param s2 the second string
+     * @return true if the strings are equal, false otherwise
+     */
+    bool areEqual(string s1, string s2){ // 0(1)
+        return s1 == s2;
+    }
+    
+    /**
+     * This function checks if a string is empty
+     * 
+     * @param s the string to check
+     * @return true if the string is empty, false otherwise
+     */
+    bool isEmptyString(string s){ // 0(1)
+        return s == EMPTY_USR_LOG;
+    }
+    
+    /**
+     * This function checks if a node Found
+     * 
+     * @param node the node to check
+     * @return true if the node Found, false otherwise
+     */
+    bool Found(AVLNode<User_ID, User> node){ // 0(1)
+        return node != NOT_FOUND;
+    }
+    
+    /**
+     * This function checks if a node was found in the AVLTree
+     * 
+     * @param node the node to check
+     * @return true if the node was found, false otherwise
+     */
+    bool Found(AVLNode<Group_ID, Group> node){ // 0(1)
+        return node != NOT_FOUND;
+    }
+
+    /**
+     * This function checks if a string is a valid ID
+     *
+     * @param id the string to check
+     * @return true if the string is a valid ID, false otherwise
+     */
+    bool IDValidator(string id){ // 0(1)
+        return !isEmptyString(id) && isAlphabetic(id);
+    }
+    /**********************************************************************/
+    /*               Funzione da implementare                             */
+    /**********************************************************************/
+
+
+    /**
+     * This function creates an empty network
+     *
+     * @return an empty network
+     */
     Network createEmptyNetwork(){ // 0(1)
         Network net = new st_Network;
         net->members = createAVLTree<User_ID, User>();
@@ -63,18 +125,27 @@ namespace network{
         return net;
     }
 
-    // Ritorna true se la network net e' vuota, false altrimenti
+    /**
+     * This function checks if a network is empty
+     *
+     * @param net the network to check
+     * @return true if the network is empty, false otherwise
+     */
     bool isEmpty(const Network& net){ // 0(1)
+        // #members = 0 -> #creatorOf = 0 && #memberOf = 0 && #friends = 0 -> #groups = 0 -> net = empty
         return isEmpty(net->members);
     }
 
-    // Aggiunge un membro alla network net con user_Login = usr_Log
-    // Se usr_Log e' gia presente ritorna false
-    // Se usr_Log e' uguale a "" ritorno false
-    // Se usr_Log non contiene solo caratteri alfabetici, ritorna false
-    // Altrimenti ritorna true
+    /**
+     * This function adds a member to the network
+     *
+     * @param usr_Log the user login of the member to add
+     * @param net the network to add the member to
+     * @return true if the member was added, false otherwise
+     */
     bool addMember(string usr_Log, Network &net){ // 0(log(n))
-        if(usr_Log == EMPTY_USR_LOG || !isAlphabetic(usr_Log) || search(net->members, usr_Log) != NOT_FOUND)
+        AVLNode<User_ID,User> node = search(net->members, usr_Log);
+        if(!IDValidator(usr_Log) || Found(node))
             return false;
         User user = new userStruct;
         user->user_Login = usr_Log;
@@ -83,95 +154,139 @@ namespace network{
         return true;
     }
 
-    // Rende amici nella network net i membri con user_Login usr_Log1 e usr_Log2
-    // Se usr_Log1 o usr_Log2 (o entrambi) non sono presenti in net, ritorna false
-    // Se usr_Log1 e' uguale a usr_Log2, ritorna false
-    // Altrimenti ritorna true (anche se sono gia amici)
-    bool becomeFriends(string usr_Log1, string usr_Log2, Network &net){ // 0(log(n))
-        if(usr_Log1 == usr_Log2 || search(net->members, usr_Log1) == NOT_FOUND || search(net->members, usr_Log2) == NOT_FOUND)
+    /**
+     * This function makes two members friends
+     *
+     * @param usr_Log1 the user login of the first member
+     * @param usr_Log2 the user login of the second member
+     * @param net the network to make the members friends in
+     * @return true if the members became friends, false otherwise
+     */
+    bool becomeFriends(User_ID usr_Log1, User_ID usr_Log2, Network& net) {
+        AVLNode<User_ID,User> user1 = search(net->members, usr_Log1);
+        AVLNode<User_ID,User> user2 = search(net->members, usr_Log2);
+        if (areEqual(usr_Log1,usr_Log2) || !Found(user1) || !Found(user2))
             return false;
-        User user1 = search(net->members, usr_Log1)->value;
-        User user2 = search(net->members, usr_Log2)->value;
-        user1->friends = insert(user1->friends, usr_Log2, user2);
-        user2->friends = insert(user2->friends, usr_Log1, user1);
+        user1->value->friends = insert(user1->value->friends, usr_Log2, user2->value);
+        user2->value->friends = insert(user2->value->friends, usr_Log1, user1->value);
         return true;
     }
 
-    // Ritorna true se i membri con user_Login usr_Log1 e usr_Log2 nella network sono amici
-    //   (chiaramente devono anche gia' essere presenti entrambi in net)
-    // Altrimenti ritorna false
-    bool areFriends(string usr_Log1, string usr_Log2, const Network &net){ // 0(log(n))
-        if(usr_Log1 == usr_Log2 || search(net->members, usr_Log1) == NOT_FOUND || search(net->members, usr_Log2) == NOT_FOUND)
+    /**
+     * This function checks if two members are friends
+     *
+     * @param usr_Log1 the user login of the first member
+     * @param usr_Log2 the user login of the second member
+     * @param net the network to check the friendship in
+     * @return true if the members are friends, false otherwise
+     */
+    bool areFriends(string usr_Log1, string usr_Log2, const Network &net){
+        AVLNode<User_ID,User> user1 = search(net->members, usr_Log1);
+        AVLNode<User_ID,User> user2 = search(net->members, usr_Log2);
+        if(areEqual(usr_Log1,usr_Log2) || !Found(user1) || !Found(user2)) // 0(log(n))
             return false;
-        User user1 = search(net->members, usr_Log1)->value;
-        User user2 = search(net->members, usr_Log2)->value;
-        return search(user1->friends, usr_Log2) != NOT_FOUND && search(user2->friends, usr_Log1) != NOT_FOUND;
+        bool user1IsFriendWithUser2 = Found(search(user1->value->friends, usr_Log2)); // 0(log(m))
+        bool user2IsFriendWithUser1 = Found(search(user2->value->friends, usr_Log1)); // 0(log(m))
+        return user1IsFriendWithUser2 && user2IsFriendWithUser1;
     }
 
-    // Aggiunge un nuovo gruppo di group_Name g_Name alla network net
-    // Questo gruppo ha un unico creatore che e il membro con user_Login usr_Log
-    // Tutti gli amici del creatore al momento della creazione diventano membri del gruppo
-    // Se non c'e' un membro in net con user_Login usr_Log, ritorna false
-    // Se g_Name esiste gia', ritorna false
-    // Altrimenti ritorna true
+    /**
+     * This function creates a group in the network
+     *
+     * @param usr_Log the user login of the member to create the group
+     * @param g_Name the name of the group to create
+     * @param net the network to create the group in
+     * @return true if the group was created, false otherwise
+     */
     bool createGroup(string usr_Log, string g_Name, Network &net){ // 0(nlog(n))
-        if(search(net->members, usr_Log) == NOT_FOUND || search(net->groups, g_Name) != NOT_FOUND)
+        // check if the user exists
+        AVLNode<User_ID,User> user = search(net->members, usr_Log);
+        if(!Found(user))
             return false;
+        // check if the group exists
+        AVLNode<Group_ID,Group> groupExist = search(net->groups, g_Name);
+        if(Found(groupExist) || !IDValidator(g_Name))
+            return false;
+        //create the group
         Group group = new groupStruct;
-        group->creator = search(net->members, usr_Log)->value;
+        group->creator = user->value;
         group->members = createAVLTree<User_ID, User>();
-        User user = search(net->members, usr_Log)->value;
-        group->members = insert(group->members, usr_Log, user);
-        Union(group->members, user->friends); // 0(nlog(m))
+        //add friends of creator to the group
+        auto iterateInFriends = [&group](const std::string& key, User& user) -> void{
+            group->members = insert(group->members, key, user); // 0(log(n))
+        };
+        performAction(user->value->friends,iterateInFriends); // 0(n)
+        // add the creator to the group
+        group->members = insert(group->members, usr_Log, user->value);
         net->groups = insert(net->groups, g_Name, group);
         return true;
     }
 
-    // Il membro con user_Login usr_Log, diventa membro del gruppo con group_Name = g_Name
-    // Ritorna true se c'e' un membro usr_Log e un gruppo g_Name
-    // Altrimenti ritorna false
+    /**
+     * This function makes a member join a group
+     *
+     * @param usr_Log the user login of the member to join the group
+     * @param g_Name the name of the group to join
+     * @param net the network to join the group in
+     * @return true if the member joined the group, false otherwise
+     */
     bool joinGroup(string usr_Log, string g_Name, Network &net){ //0(log(n))
-        if(search(net->members, usr_Log) == NOT_FOUND || search(net->groups, g_Name) == NOT_FOUND) // 0(log(n))
+        AVLNode<User_ID,User> user = search(net->members, usr_Log);
+        AVLNode<Group_ID,Group> group = search(net->groups, g_Name);
+        if(!Found(user) || !Found(group)) // 0(log(n))
             return false;
-        Group group = search(net->groups, g_Name)->value; // 0(log(n))
-        group->members = insert(group->members, usr_Log, search(net->members, usr_Log)->value); // 0(log(n))
+        group->value->members = insert(group->value->members, usr_Log, user->value); // 0(log(n))
         return true;
     }
 
-    // Cancella il membro con user_Login = usr_Log dal network net
-    // Cancella anche tutti i gruppi di cui questo membro e' il creatore
-    // Ritorna true se tale membro esiste
-    // Altrimenti ritorna false
+    /**
+     * This function deletes a member from the network
+     *
+     * @param usr_Log the user login of the member to delete
+     * @param net the network to delete the member from
+     * @return true if the member was deleted, false otherwise
+     */
     bool deleteMember(string usr_Log, Network &net) { // 0(nlog(n))
         if (search(net->members, usr_Log) == NOT_FOUND) // 0(log(n))
             return false;
 
-        // Prendi una lista di gruppi di cui usr_Log è creatore
+        // delete all groups created by the user
         list::List creatorOfList = creatorOf(usr_Log, net); // 0(nlog(n))
         for (int i = 0; i < creatorOfList.size; i++) { // 0(nlog(n))
             string groupName = get(i, creatorOfList);
             deleteGroup(groupName, net);
         }
 
+        // delete all friendships of the user
         list::List friendsList = friends(usr_Log, net); // 0(nlog(n))
         for (int i = 0; i < friendsList.size; i++) { // 0(nlog(n))
             string friendName = get(i, friendsList);
             leaveFriendship(usr_Log, friendName, net);
         }
+
+        // delete all groups the user is in
         list::List memberOfList = memberOf(usr_Log, net); // 0(nlog(n))
         for (int i = 0; i < memberOfList.size; i++) { // 0(nlog(n))
             string groupName = get(i, memberOfList);
             leaveGroup(usr_Log, groupName, net);
         }
+
+        // delete the user
         net->members = deleteNode(net->members, usr_Log); // 0(log(n))
         return true;
     }
 
-    // Cancella il gruppo con group_Name = g_Name dal network net
-    // Ritorna true se un tale gruppo esiste
-    // Altrimenti ritorna false
+
+    /**
+     * This function deletes a group from the network
+     *
+     * @param g_Name the name of the group to delete
+     * @param net the network to delete the group from
+     * @return true if the group was deleted, false otherwise
+     */
     bool deleteGroup(string g_Name, Network &net) { // 0(log(n))
-        if (search(net->groups, g_Name) == NOT_FOUND)
+        AVLNode<Group_ID, Group> group = search(net->groups, g_Name);
+        if (!Found(group))
             return false;
         net->groups = deleteNode(net->groups, g_Name);
         return true;
@@ -179,106 +294,134 @@ namespace network{
 
 
 
-    // Cancella l'amicizia fra il membro usr_Log1 e il membro usr_Log2
-    // Se non ci sono i membri usr_Log1 o usr_Log2, ritorna false
-    // Se usr_Log1 e' uguale a usr_Log2, ritorna false
-    // Altrimenti ritorna true (anche se non sono amici)
+    /**
+     * This function deletes a friendship between two members
+     *
+     * @param usr_Log1 the user login of the first member
+     * @param usr_Log2 the user login of the second member
+     * @param net the network to delete the friendship from
+     * @return true if the friendship was deleted, false otherwise
+     */
     bool leaveFriendship(string usr_Log1, string usr_Log2, Network &net){ // 0(log(n))
-        if(usr_Log1 == usr_Log2 || search(net->members, usr_Log1) == NOT_FOUND || search(net->members, usr_Log2) == NOT_FOUND)
+        AVLNode<User_ID,User> user1 = search(net->members, usr_Log1);
+        AVLNode<User_ID,User> user2 = search(net->members, usr_Log2);
+        if(areEqual(usr_Log1,usr_Log2) || !Found(user1) || !Found(user2))
             return false;
-        User user1 = search(net->members, usr_Log1)->value;
-        User user2 = search(net->members, usr_Log2)->value;
-        user1->friends = deleteNode(user1->friends, usr_Log2);
-        user2->friends = deleteNode(user2->friends, usr_Log1);
+        user1->value->friends = deleteNode(user1->value->friends, usr_Log2);
+        user2->value->friends = deleteNode(user2->value->friends, usr_Log1);
         return true;
     }
 
-    // Il membro con user_Login = usr_Log viene rimosso dal gruppo con group_Name = g_Name
-    // Se il membro e' il creatore, il gruppo vienne cancellato
-    // Se non c'e' in net un membro usr_Log o un gruppo g_Name ritorna false
-    // Altrimenti ritorna true (anche se il membro usr_Log non e' membro del gruppo)
+    /**
+     * This function deletes a member from a group
+     *
+     * @param usr_Log the user login of the member to delete from the group
+     * @param g_Name the name of the group to delete the member from
+     * @param net the network to delete the member from the group in
+     * @return true if the member was deleted from the group, false otherwise
+     */
     bool leaveGroup(string usr_Log, string g_Name, Network &net){ // 0(log(n))
-        if(search(net->members, usr_Log) == NOT_FOUND || search(net->groups, g_Name) == NOT_FOUND)
+        AVLNode<User_ID,User> user = search(net->members, usr_Log);
+        AVLNode<Group_ID,Group> group = search(net->groups, g_Name);
+        if(!Found(user) || !Found(group))
             return false;
-        Group group = search(net->groups, g_Name)->value;
-        if(group->creator->user_Login == usr_Log)
+        if(areEqual(group->value->creator->user_Login,usr_Log))
             return deleteGroup(g_Name, net);
-        group->members = deleteNode(group->members, usr_Log);
+        group->value->members = deleteNode(group->value->members, usr_Log);
         return true;
     }
 
-    // Ritorna la lista in ordine alfabetico dei user_Login dei membri del network
+    /**
+     * This function returns the members list of the network
+     *
+     * @param net the network to get the members from
+     * @return the members list of the network
+     */
     list::List members(const Network &net){ // 0(n)
         return toList(net->members);
     }
 
-    // Ritorna la lista in ordine alfabetico dei group_Name dei gruppi del network
+    /**
+     * This function returns the groups list of the network
+     *
+     * @param net the network to get the groups from
+     * @return the groups list of the network
+     */
     list::List groups(const Network &net){ // 0(n)
         return toList(net->groups);
     }
 
-    // Ritorna la lista dei user_Login degli amici del membro con user_Login = usr_Log
-    //  in ordine alfabetico
-    // Se non c'e membro con user_Login = usr_Log ritorna la lista vuota
+    /**
+     * This function returns the friends list of a member
+     *
+     * @param usr_Log the user login of the member to get the friends of
+     * @param net the network to get the friends from
+     * @return the friends list of the member
+     */
     list::List friends(string usr_Log, const Network &net){ // 0(n)
-        AVLNode<User_ID, User> node = search(net->members, usr_Log);
-        if(isEmpty(node))
+        AVLNode<User_ID, User> user = search(net->members, usr_Log);
+        if(isEmpty(user))
             return createEmpty();
-        User user = node->value;
-        return toList(user->friends);
+        return toList(user->value->friends);
     }
 
-    // Ritorna la lista dei nomi dei gruppi di cui il membro usr_Log
-    //   e' membro (in ordine alfabetico)
-    // (NB: un membro e' anche membro di un gruppo di cui e' il creatore)
-    // Se in net non c'e' membro usr_Log ritorna la lista vuota
+    /**
+     * This function returns the member of list of a member
+     *
+     * @param usr_Log the user login of the member to get the member of list of
+     * @param net the network to get the member of list from
+     * @return the member of list of the member
+     */
     list::List memberOf(string usr_Log, const Network &net){ // 0(nlogn)
         list::List l = list::createEmpty();
-        performActionOnCondition(net->groups,
-                                 [usr_Log](const std::string& key, Group& group) -> bool {
-                                     return search(group->members, usr_Log) != EMPTY_TREE;
-                                 },
-                                 [&l](const std::string& key, Group& group) -> void{
-                                     list::addBack(key,l);
-                                 }
-        );
+        auto iterateInGroups = [&l,usr_Log](const std::string& key, Group& group) -> void{
+            AVLNode<User_ID, User> user = search(group->members, usr_Log);
+            if(!isEmpty(user))
+                list::addBack(key,l);
+        };
+        performAction(net->groups,iterateInGroups); // 0(n)
         return l;
     }
 
-    // Ritorna la lista dei nomi dei gruppi di cui il membro usr_Log
-    //  e' creatore in ordine alfabetico
-    // Se non c'e' membro usr_Log ritorna la lista vuota
+    /**
+     * This function returns the creator of list of a member
+     *
+     * @param usr_Log the user login of the member to get the creator of list of
+     * @param net the network to get the creator of list from
+     * @return the creator of list of the member
+     */
     list::List creatorOf(string usr_Log, const Network &net){  // 0(n)
         list::List l = list::createEmpty();
-        performActionOnCondition(net->groups,
-                                 [usr_Log](const std::string& key, Group& group) -> bool {
-                                     return group->creator->user_Login == usr_Log;
-                                 },
-                                 [&l](const std::string& key, Group& group) -> void{
-                                     list::addBack(key,l);
-                                 }
-        ); // 0(n)
+        auto iterateInGroups = [&l,usr_Log](const std::string& key, Group& group) -> void{
+            if(areEqual(group->creator->user_Login,usr_Log))
+                list::addBack(key,l);
+        };
+        performAction(net->groups,iterateInGroups); // 0(n)
         return l;
     }
 
-    // Il membro usr_Log diventa amico con tutti i membri con i
-    //   quali condivide un gruppo
-    // Ritorna true se c'e un membro con user_Login = usr_Log
-    // Altrimenti ritorna false
+    /**
+     * This function makes a member friends with all the members of the groups he is in
+     *
+     * @param usr_Log the user login of the member to make friends with
+     * @param net the network to make friends in
+     * @return true if the member was found, false otherwise
+     */
     bool makeMoreFriends(string usr_Log, Network &net) { // 0(n*m) where m is the number of members in the group and n is the number of groups
-        performActionOnCondition(net->groups,
-                                 [usr_Log](const std::string& key, Group& group) -> bool {
-                                     return search(group->members, usr_Log) != EMPTY_TREE;
-                                 },
-                                 [&usr_Log, &net](const std::string& key, Group& group) -> void{
-                                     list::List members = toList(group->members); // 0(n) n=members
-                                     for(int i = 0; i < members.size; i++){
-                                         if(get(i,members) != usr_Log)
-                                             becomeFriends(usr_Log, get(i,members), net);
-                                     }
-                                 }
-        );
-        return search(net->members, usr_Log) != NOT_FOUND;
+        // this lambda function is used to iterate over the members of a group and make friends with them
+        auto iterateInMembers = [&usr_Log, &net](const std::string& key, User& user) -> void{
+            if(!areEqual(user->user_Login,usr_Log))
+                becomeFriends(usr_Log, key, net);
+        };
+        // this lambda function is used to iterate over the groups and make friends with the members of the groups
+        auto iterateInGroups = [&usr_Log, &net, &iterateInMembers](const std::string& key, Group& group) -> void{
+            AVLNode<User_ID, User> user = search(group->members, usr_Log);
+            if(!isEmpty(user))
+                performAction(group->members, iterateInMembers);
+        };
+        performAction(net->groups,iterateInGroups); // 0(n*m) where m is the number of members in the group and n is the number of groups
+        AVLNode<User_ID,User> user = search(net->members, usr_Log);
+        return Found(user);
     }
-
 }
+

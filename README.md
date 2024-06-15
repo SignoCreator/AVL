@@ -41,17 +41,19 @@ sezione relativa al laboratorio 10. Più in dettaglio le funzioni da implementar
 
 ## <span style="color:#F18F01"> ANALISI</span>
 - Per prima cosa ho definito le relazioni tra le entità del social network, ovvero i membri e i gruppi.
-- Network è una struttura dati che contiene le informazioni sui membri del social e sui gruppi creati dagli utenti, possiamo pensarlo come un database.
+- Network è una struttura dati che contiene le informazioni sui membri del social e sui gruppi creati dagli utenti, possiamo pensarlo come un contenitore.
 
 ### <span style="color:#F18F01"> ENTITA'</span>
 #### UTENTE
 - Ogni utente del social network è identificato da un user_Login, che è una stringa di lunghezza variabile.
+- La lunghezza del nome €[1,∞) 
 - Ogni utente può avere amici(altri utenti)
 - Ogni utente può essere membro di più gruppi del social network.
 - Ogni utente può creare uno o più gruppi.
 
 #### GRUPPO
 - Ogni gruppo del social network è identificato da un nome, che è una stringa di lunghezza variabile.
+- La lunghezza del nome €[1,∞)
 - Ogni gruppo ha un creatore, che è un membro del social network.
 - Ogni gruppo può avere uno o più membri.
 
@@ -65,21 +67,31 @@ sezione relativa al laboratorio 10. Più in dettaglio le funzioni da implementar
 
 #### SOCIAL NETWORK
 - Network è una struttura dati che contiene le informazioni sui membri del social e sui gruppi creati dagli utenti.
-
+- Quando il network ha 0 membri è vuoto. ( 0 membri -> 0 creatori -> 0 gruppi)
 
 ```cpp
 struct st_Network{
-        Users members;
-        Groups groups;
-    };
+    Users members;
+    Groups groups;
+};
+
+struct userStruct{
+    User_ID user_Login;
+    Friendships friends;
+};
+
+struct groupStruct{
+    User creator;
+    Users members;
+};
 ```
-### <span style="color:#F18F01"> PERCHE' HO SCELTO B-TREE TRA TUTTE</span>
+### <span style="color:#F18F01"> PERCHE' HO SCELTO AVL</span>
 
 - Ho scelto di utilizzare una struttura dati di tipo AVL-tree per memorizzare utenti, gruppi e relazioni tra utenti e gruppi.
 - Questa scelta è stata fatta per garantire una complessità logaritmica per le operazioni di ricerca, inserimento e cancellazione.
+- Risulta che alcuni inserimenti di network non siano logaritmici perché vengono richiesti ulteriori controlli.
 - Inoltre gli AVL sono alberi ordinati, quindi mi permettono di avere i dati ordinati in base al user_Login e al nome del gruppo.
 - L'ordine scelto in questo caso è lessicografico crescente.
-
 ### <span style="color:#F18F01"> Funzioni implemetate e complessità</span>
 
 ```cpp
@@ -167,7 +179,7 @@ bool makeMoreFriends ( string usr_Log , Network &net );
 ```
 - Il membro usr_Log diventa amico con tutti i membri con i quali condivide un gruppo
 - complessità O(n*m) dove n è il numero di gruppi e m è il numero di membri di ogni gruppo
-```cpp
+
 
 
 
