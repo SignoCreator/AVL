@@ -246,6 +246,8 @@ namespace AVL{
     int max(int a, int b) {
         return (a > b) ? a : b;
     }
+
+
     /**
      * @brief This function returns the balance factor of the node
      * @tparam K is the key of the node
@@ -259,6 +261,7 @@ namespace AVL{
                0 :
                height(node->left) - height(node->right);
     }
+
 
     /**
      * @brief This function returns the node with the minimum value found in the tree
@@ -274,6 +277,8 @@ namespace AVL{
             current = current->left;
         return current;
     }
+
+
 
     /**
      * @brief This function deletes a node from the tree
@@ -355,6 +360,8 @@ namespace AVL{
         return root;
     }
 
+
+
     /**
      * @brief This function converts the tree to a list-array
      * @tparam K is the key of the node
@@ -370,6 +377,8 @@ namespace AVL{
             auxToList(t->right, l);
         }
     }
+
+
     /**
      * @brief This function converts the tree to a list-array
      * @tparam K is the key of the node
