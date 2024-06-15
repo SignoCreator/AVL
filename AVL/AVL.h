@@ -55,9 +55,8 @@ namespace AVL {
     template<typename K, typename V>
     list::List toList(AVLNode<K,V>& t);
 
-    template <typename Key, typename Value,typename Condition>
+    template<typename Key, typename Value,typename Condition>
     void performAction(const AVLNode<Key, Value>& node, Condition condition);
-
 
 }
 #include "avl.tpp"
