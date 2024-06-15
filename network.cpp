@@ -7,7 +7,7 @@ using namespace list;
 
 using namespace AVL;
 
-#define EMPTY_USR_LOG "" // this makes the code more readable
+#define EMPTY_USR_LOG "" // This makes the code more readable
 namespace network{
 
     struct st_Network;
@@ -20,20 +20,30 @@ namespace network{
     using Group = groupStruct*;
     typedef st_Network* Network;
 
-
     typedef AVLTree<User_ID, User> Users; // users are represented by an AVLTree
     typedef AVLTree<Group_ID, Group> Groups; // groups are represented by an AVLTree
+
+    /**
+     * @brief This struct represents a network
+     */
     struct st_Network{
         Users members;
         Groups groups;
     };
 
     typedef AVLTree<User_ID, User> Friendships;
+
+    /**
+     * @brief This struct represents a user
+     */
     struct userStruct{
         User_ID user_Login; // user_Login is the unique identifier of the user
         Friendships friends; // friends are represented by an AVLTree
     };
 
+    /**
+     * @brief This struct represents a group
+     */
     struct groupStruct{
         User creator; // the creator of the group
         Users members; // the members of the group
@@ -45,7 +55,7 @@ namespace network{
     /**********************************************************************/
    
     /**
-     * This function checks if a string is alphabetic, that is, if it contains only letters
+     * @brief This function checks if a string is alphabetic, that is, if it contains only letters
      * 
      * @param s the string to check
      * @return true if the string is alphabetic, false otherwise
@@ -59,7 +69,7 @@ namespace network{
     }
     
     /**
-     * This function checks if two strings are equal
+     * @brief This function checks if two strings are equal
      * 
      * @param s1 the first string
      * @param s2 the second string
@@ -70,7 +80,7 @@ namespace network{
     }
     
     /**
-     * This function checks if a string is empty
+     * @brief This function checks if a string is empty
      * 
      * @param s the string to check
      * @return true if the string is empty, false otherwise
@@ -80,7 +90,7 @@ namespace network{
     }
     
     /**
-     * This function checks if a node Found
+     * @brief This function checks if a node Found
      * 
      * @param node the node to check
      * @return true if the node Found, false otherwise
@@ -90,7 +100,7 @@ namespace network{
     }
     
     /**
-     * This function checks if a node was found in the AVLTree
+     * @brief This function checks if a node was found in the AVLTree
      * 
      * @param node the node to check
      * @return true if the node was found, false otherwise
@@ -100,7 +110,7 @@ namespace network{
     }
 
     /**
-     * This function checks if a string is a valid ID
+     * @brief This function checks if a string is a valid ID
      *
      * @param id the string to check
      * @return true if the string is a valid ID, false otherwise
@@ -114,7 +124,7 @@ namespace network{
 
 
     /**
-     * This function creates an empty network
+     * @brief This function creates an empty network
      *
      * @return an empty network
      */
@@ -126,7 +136,7 @@ namespace network{
     }
 
     /**
-     * This function checks if a network is empty
+     * @brief This function checks if a network is empty
      *
      * @param net the network to check
      * @return true if the network is empty, false otherwise
@@ -137,7 +147,7 @@ namespace network{
     }
 
     /**
-     * This function adds a member to the network
+     * @brief This function adds a member to the network
      *
      * @param usr_Log the user login of the member to add
      * @param net the network to add the member to
@@ -155,7 +165,7 @@ namespace network{
     }
 
     /**
-     * This function makes two members friends
+     * @brief This function makes two members friends
      *
      * @param usr_Log1 the user login of the first member
      * @param usr_Log2 the user login of the second member
@@ -173,7 +183,7 @@ namespace network{
     }
 
     /**
-     * This function checks if two members are friends
+     * @brief This function checks if two members are friends
      *
      * @param usr_Log1 the user login of the first member
      * @param usr_Log2 the user login of the second member
@@ -191,7 +201,7 @@ namespace network{
     }
 
     /**
-     * This function creates a group in the network
+     * @brief This function creates a group in the network
      *
      * @param usr_Log the user login of the member to create the group
      * @param g_Name the name of the group to create
@@ -223,7 +233,7 @@ namespace network{
     }
 
     /**
-     * This function makes a member join a group
+     * @brief This function makes a member join a group
      *
      * @param usr_Log the user login of the member to join the group
      * @param g_Name the name of the group to join
@@ -240,7 +250,7 @@ namespace network{
     }
 
     /**
-     * This function deletes a member from the network
+     * @brief This function deletes a member from the network
      *
      * @param usr_Log the user login of the member to delete
      * @param net the network to delete the member from
@@ -249,28 +259,18 @@ namespace network{
     bool deleteMember(string usr_Log, Network &net) { // 0(nlog(n))
         if (search(net->members, usr_Log) == NOT_FOUND) // 0(log(n))
             return false;
-
         // delete all groups created by the user
         list::List creatorOfList = creatorOf(usr_Log, net); // 0(nlog(n))
-        for (int i = 0; i < creatorOfList.size; i++) { // 0(nlog(n))
-            string groupName = get(i, creatorOfList);
-            deleteGroup(groupName, net);
-        }
-
+        for (int i = 0; i < creatorOfList.size; i++) // 0(nlog(n))
+            deleteGroup(get(i, creatorOfList), net);
         // delete all friendships of the user
         list::List friendsList = friends(usr_Log, net); // 0(nlog(n))
-        for (int i = 0; i < friendsList.size; i++) { // 0(nlog(n))
-            string friendName = get(i, friendsList);
-            leaveFriendship(usr_Log, friendName, net);
-        }
-
+        for (int i = 0; i < friendsList.size; i++) // 0(nlog(n))
+            leaveFriendship(usr_Log, get(i, friendsList), net);
         // delete all groups the user is in
         list::List memberOfList = memberOf(usr_Log, net); // 0(nlog(n))
-        for (int i = 0; i < memberOfList.size; i++) { // 0(nlog(n))
-            string groupName = get(i, memberOfList);
-            leaveGroup(usr_Log, groupName, net);
-        }
-
+        for (int i = 0; i < memberOfList.size; i++)// 0(nlog(n))
+            leaveGroup(usr_Log, get(i, memberOfList), net);
         // delete the user
         net->members = deleteNode(net->members, usr_Log); // 0(log(n))
         return true;
@@ -278,7 +278,7 @@ namespace network{
 
 
     /**
-     * This function deletes a group from the network
+     * @brief This function deletes a group from the network
      *
      * @param g_Name the name of the group to delete
      * @param net the network to delete the group from
@@ -295,7 +295,7 @@ namespace network{
 
 
     /**
-     * This function deletes a friendship between two members
+     * @brief This function deletes a friendship between two members
      *
      * @param usr_Log1 the user login of the first member
      * @param usr_Log2 the user login of the second member
@@ -313,7 +313,7 @@ namespace network{
     }
 
     /**
-     * This function deletes a member from a group
+     * @brief This function deletes a member from a group
      *
      * @param usr_Log the user login of the member to delete from the group
      * @param g_Name the name of the group to delete the member from
@@ -332,7 +332,7 @@ namespace network{
     }
 
     /**
-     * This function returns the members list of the network
+     * @brief This function returns the members list of the network
      *
      * @param net the network to get the members from
      * @return the members list of the network
@@ -342,7 +342,7 @@ namespace network{
     }
 
     /**
-     * This function returns the groups list of the network
+     * @brief This function returns the groups list of the network
      *
      * @param net the network to get the groups from
      * @return the groups list of the network
@@ -352,7 +352,7 @@ namespace network{
     }
 
     /**
-     * This function returns the friends list of a member
+     * @brief This function returns the friends list of a member
      *
      * @param usr_Log the user login of the member to get the friends of
      * @param net the network to get the friends from
@@ -366,7 +366,7 @@ namespace network{
     }
 
     /**
-     * This function returns the member of list of a member
+     * @brief This function returns the member of list of a member
      *
      * @param usr_Log the user login of the member to get the member of list of
      * @param net the network to get the member of list from
@@ -384,7 +384,7 @@ namespace network{
     }
 
     /**
-     * This function returns the creator of list of a member
+     * @brief This function returns the creator of list of a member
      *
      * @param usr_Log the user login of the member to get the creator of list of
      * @param net the network to get the creator of list from
@@ -401,19 +401,19 @@ namespace network{
     }
 
     /**
-     * This function makes a member friends with all the members of the groups he is in
+     * @brief This function makes a member friends with all the members of the groups he is in
      *
      * @param usr_Log the user login of the member to make friends with
      * @param net the network to make friends in
      * @return true if the member was found, false otherwise
      */
     bool makeMoreFriends(string usr_Log, Network &net) { // 0(n*m) where m is the number of members in the group and n is the number of groups
-        // this lambda function is used to iterate over the members of a group and make friends with them
+        // @brief This lambda function is used to iterate over the members of a group and make friends with them
         auto iterateInMembers = [&usr_Log, &net](const std::string& key, User& user) -> void{
             if(!areEqual(user->user_Login,usr_Log))
                 becomeFriends(usr_Log, key, net);
         };
-        // this lambda function is used to iterate over the groups and make friends with the members of the groups
+        // @brief This lambda function is used to iterate over the groups and make friends with the members of the groups
         auto iterateInGroups = [&usr_Log, &net, &iterateInMembers](const std::string& key, Group& group) -> void{
             AVLNode<User_ID, User> user = search(group->members, usr_Log);
             if(!isEmpty(user))

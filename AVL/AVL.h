@@ -8,13 +8,7 @@
 namespace AVL {
 
     template<typename K, typename V>
-    struct AVLNodeStruct {
-        K key;
-        V value;
-        AVLNodeStruct<K, V> *left;
-        AVLNodeStruct<K, V> *right;
-        int height;
-    };
+    struct AVLNodeStruct;
 
     template<typename K, typename V>
     using AVLNode = AVLNodeStruct<K, V> *;
