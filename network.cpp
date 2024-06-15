@@ -215,7 +215,7 @@ namespace network{
             return false;
         // check if the group exists
         AVLNode<Group_ID,Group> groupExist = search(net->groups, g_Name);
-        if(Found(groupExist) || !IDValidator(g_Name))
+        if(Found(groupExist))
             return false;
         //create the group
         Group group = new groupStruct;
