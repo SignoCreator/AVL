@@ -90,12 +90,12 @@ namespace network{
     }
     
     /**
-     * @brief This function checks if a node Found
+     * @brief This function checks if a node found
      * 
      * @param node the node to check
-     * @return true if the node Found, false otherwise
+     * @return true if the node found, false otherwise
      */
-    bool Found(AVLNode<User_ID, User> node){ // 0(1)
+    bool found(AVLNode<User_ID, User> node){ // 0(1)
         return node != NOT_FOUND;
     }
     
@@ -105,7 +105,7 @@ namespace network{
      * @param node the node to check
      * @return true if the node was found, false otherwise
      */
-    bool Found(AVLNode<Group_ID, Group> node){ // 0(1)
+    bool found(AVLNode<Group_ID, Group> node){ // 0(1)
         return node != NOT_FOUND;
     }
 
@@ -155,7 +155,7 @@ namespace network{
      */
     bool addMember(string usr_Log, Network &net){ // 0(log(n))
         AVLNode<User_ID,User> node = search(net->members, usr_Log);
-        if(!IDValidator(usr_Log) || Found(node))
+        if(!IDValidator(usr_Log) || found(node))
             return false;
         User user = new userStruct;
         user->user_Login = usr_Log;
@@ -175,7 +175,7 @@ namespace network{
     bool becomeFriends(User_ID usr_Log1, User_ID usr_Log2, Network& net) {
         AVLNode<User_ID,User> user1 = search(net->members, usr_Log1);
         AVLNode<User_ID,User> user2 = search(net->members, usr_Log2);
-        if (areEqual(usr_Log1,usr_Log2) || !Found(user1) || !Found(user2))
+        if (areEqual(usr_Log1,usr_Log2) || !found(user1) || !found(user2))
             return false;
         user1->value->friends = insert(user1->value->friends, usr_Log2, user2->value);
         user2->value->friends = insert(user2->value->friends, usr_Log1, user1->value);
@@ -193,10 +193,10 @@ namespace network{
     bool areFriends(string usr_Log1, string usr_Log2, const Network &net){
         AVLNode<User_ID,User> user1 = search(net->members, usr_Log1);
         AVLNode<User_ID,User> user2 = search(net->members, usr_Log2);
-        if(areEqual(usr_Log1,usr_Log2) || !Found(user1) || !Found(user2)) // 0(log(n))
+        if(areEqual(usr_Log1,usr_Log2) || !found(user1) || !found(user2)) // 0(log(n))
             return false;
-        bool user1IsFriendWithUser2 = Found(search(user1->value->friends, usr_Log2)); // 0(log(m))
-        bool user2IsFriendWithUser1 = Found(search(user2->value->friends, usr_Log1)); // 0(log(m))
+        bool user1IsFriendWithUser2 = found(search(user1->value->friends, usr_Log2)); // 0(log(m))
+        bool user2IsFriendWithUser1 = found(search(user2->value->friends, usr_Log1)); // 0(log(m))
         return user1IsFriendWithUser2 && user2IsFriendWithUser1;
     }
 
@@ -211,11 +211,11 @@ namespace network{
     bool createGroup(string usr_Log, string g_Name, Network &net){ // 0(nlog(n))
         // check if the user exists
         AVLNode<User_ID,User> user = search(net->members, usr_Log);
-        if(!Found(user))
+        if(!found(user))
             return false;
         // check if the group exists
         AVLNode<Group_ID,Group> groupExist = search(net->groups, g_Name);
-        if(Found(groupExist))
+        if(found(groupExist))
             return false;
         //create the group
         Group group = new groupStruct;
@@ -243,7 +243,7 @@ namespace network{
     bool joinGroup(string usr_Log, string g_Name, Network &net){ //0(log(n))
         AVLNode<User_ID,User> user = search(net->members, usr_Log);
         AVLNode<Group_ID,Group> group = search(net->groups, g_Name);
-        if(!Found(user) || !Found(group)) // 0(log(n))
+        if(!found(user) || !found(group)) // 0(log(n))
             return false;
         group->value->members = insert(group->value->members, usr_Log, user->value); // 0(log(n))
         return true;
@@ -257,7 +257,8 @@ namespace network{
      * @return true if the member was deleted, false otherwise
      */
     bool deleteMember(string usr_Log, Network &net) { // 0(nlog(n))
-        if (search(net->members, usr_Log) == NOT_FOUND) // 0(log(n))
+        AVLNode<User_ID,User> user = search(net->members, usr_Log);
+        if (!found(user)) // 0(log(n))
             return false;
         // delete all groups created by the user
         list::List creatorOfList = creatorOf(usr_Log, net); // 0(nlog(n))
@@ -286,7 +287,7 @@ namespace network{
      */
     bool deleteGroup(string g_Name, Network &net) { // 0(log(n))
         AVLNode<Group_ID, Group> group = search(net->groups, g_Name);
-        if (!Found(group))
+        if (!found(group))
             return false;
         net->groups = deleteNode(net->groups, g_Name);
         return true;
@@ -305,7 +306,7 @@ namespace network{
     bool leaveFriendship(string usr_Log1, string usr_Log2, Network &net){ // 0(log(n))
         AVLNode<User_ID,User> user1 = search(net->members, usr_Log1);
         AVLNode<User_ID,User> user2 = search(net->members, usr_Log2);
-        if(areEqual(usr_Log1,usr_Log2) || !Found(user1) || !Found(user2))
+        if(areEqual(usr_Log1,usr_Log2) || !found(user1) || !found(user2))
             return false;
         user1->value->friends = deleteNode(user1->value->friends, usr_Log2);
         user2->value->friends = deleteNode(user2->value->friends, usr_Log1);
@@ -323,7 +324,7 @@ namespace network{
     bool leaveGroup(string usr_Log, string g_Name, Network &net){ // 0(log(n))
         AVLNode<User_ID,User> user = search(net->members, usr_Log);
         AVLNode<Group_ID,Group> group = search(net->groups, g_Name);
-        if(!Found(user) || !Found(group))
+        if(!found(user) || !found(group))
             return false;
         if(areEqual(group->value->creator->user_Login,usr_Log))
             return deleteGroup(g_Name, net);
@@ -367,7 +368,6 @@ namespace network{
 
     /**
      * @brief This function returns the member of list of a member
-     *
      * @param usr_Log the user login of the member to get the member of list of
      * @param net the network to get the member of list from
      * @return the member of list of the member
@@ -421,7 +421,7 @@ namespace network{
         };
         performAction(net->groups,iterateInGroups); // 0(n*m) where m is the number of members in the group and n is the number of groups
         AVLNode<User_ID,User> user = search(net->members, usr_Log);
-        return Found(user);
+        return found(user);
     }
 }
 
