@@ -169,12 +169,145 @@ namespace AVL{
     }
 
 
+
+
+
+
     /**
-     * @brief This function performs a pre-order traversal of the tree
+     * @brief This function deletes a node from the tree
      * @tparam K is the key of the node
      * @tparam V is the value of the node
      * @param root is the root of the tree
+     * @param key is the key of the node to be deleted
+     * @return the root of the tree
      */
+    template<typename K, typename V>
+    AVLNode<K, V> remove(AVLNode<K, V>& root, K key) {
+        //if the tree is empty, return an empty tree
+        if (isEmpty(root))
+            return root;
+        //if the key is less than the root, delete it from the left subtree
+        if (key < root->key)
+            root->left = remove(root->left, key);
+        //if the key is greater than the root, delete it from the right subtree
+        else if (key > root->key)
+            root->right = remove(root->right, key);
+        //if the key is equal to the root, delete the root
+        else {
+            //if the node has one child or no child
+            if (isEmpty(root->left) || isEmpty(root->right)) {
+                AVLNode<K, V> temp;
+                // if left child is empty, then the right child is the new root
+                if(isEmpty(root->left))
+                    temp = root->right;
+                // if right child is empty, then the left child is the new root
+                else
+                    temp = root->left;
+                //if the node has no child then it is the leaf node
+                if (isEmpty(temp)) {
+                    temp = root;
+                    root = EMPTY_TREE;
+                }else
+                    *root = *temp;
+                delete temp;
+            } else {
+                //if the node has two children, get the inorder successor
+                AVLNode<K, V> temp = minValueNode(root->right);
+                root->key = temp->key;
+                root->value = temp->value;
+                root->right = remove(root->right, temp->key);
+            }
+        }
+        //if the tree has only one node, return it
+        if (isEmpty(root))
+            return root;
+        //update the height of the current node
+        root->height = max(height(root->left), height(root->right)) + 1;
+
+        int balance = balanceFactor(root);
+
+        // in order to rebalance the tree, we need to check if the node is unbalanced,
+        //then we can apply the corresponding rotation to preserve the AVL property
+        //if the node is unbalanced, there are 4 cases
+
+        //this is the left left case
+        if (balance > 1 && balanceFactor(root->left) >= 0)
+            return rightRotate(root);
+
+        //this is the left right case
+        if (balance > 1 && balanceFactor(root->left) < 0) {
+            root->left = leftRotate(root->left);
+            return rightRotate(root);
+        }
+
+        //this is the right right case
+        if (balance < -1 && balanceFactor(root->right) <= 0)
+            return leftRotate(root);
+
+        //this is the right left case
+        if (balance < -1 && balanceFactor(root->right) > 0) {
+            root->right = rightRotate(root->right);
+            return leftRotate(root);
+        }
+
+        return root;
+    }
+
+
+
+    /**
+     * @brief This function converts the tree to a list-array
+     * @tparam K is the key of the node
+     * @tparam V is the value of the node
+     * @param t is the tree to be converted
+     * @param l is the list-array
+     */
+    template<typename K,typename V>
+    void auxToList(AVLNode<K,V>& t,list::List& l){
+        if (!isEmpty(t)) {
+            auxToList(t->left, l);
+            list::addBack(t->key, l);
+            auxToList(t->right, l);
+        }
+    }
+
+
+    /**
+     * @brief This function converts the tree to a list-array
+     * @tparam K is the key of the node
+     * @tparam V is the value of the node
+     * @param t is the tree to be converted
+     * @return a list-array
+     */
+    template<typename K,typename V>
+    list::List toList(AVLNode<K,V>& t) {
+        list::List l = list::createEmpty();
+        auxToList(t, l);
+        return l;
+    }
+
+    /**
+     * @brief This function performs an action on each node of the tree
+     * @tparam Key is the key of the node
+     * @tparam Value is the value of the node
+     * @tparam Action is the action to be performed on the node
+     * @param node is the current node
+     * @param action is the action to be performed
+     */
+    template <typename Key, typename Value,typename Action>
+    void performAction(AVLNode<Key, Value>& node, Action action) {
+        if (!node) return;
+        performAction(node->left, action);
+        action(node->key, node->value);
+        performAction(node->right, action);
+    }
+
+    /**
+    * @brief This function performs a pre-order traversal of the tree
+    * @tparam K is the key of the node
+    * @tparam V is the value of the node
+    * @param root is the root of the tree
+    */
     template<typename K, typename V>
     void preOrder(const AVLNode<K, V>& root) {
         if (!isEmpty(root)) {
@@ -276,137 +409,6 @@ namespace AVL{
         while (!isEmpty(current->left))
             current = current->left;
         return current;
-    }
-
-
-
-    /**
-     * @brief This function deletes a node from the tree
-     * @tparam K is the key of the node
-     * @tparam V is the value of the node
-     * @param root is the root of the tree
-     * @param key is the key of the node to be deleted
-     * @return the root of the tree
-     */
-    template<typename K, typename V>
-    AVLNode<K, V> deleteNode(AVLNode<K, V>& root, K key) {
-        //if the tree is empty, return an empty tree
-        if (isEmpty(root))
-            return root;
-        //if the key is less than the root, delete it from the left subtree
-        if (key < root->key)
-            root->left = deleteNode(root->left, key);
-        //if the key is greater than the root, delete it from the right subtree
-        else if (key > root->key)
-            root->right = deleteNode(root->right, key);
-        //if the key is equal to the root, delete the root
-        else {
-            //if the node has one child or no child
-            if (isEmpty(root->left) || isEmpty(root->right)) {
-                AVLNode<K, V> temp;
-                // if left child is empty, then the right child is the new root
-                if(isEmpty(root->left))
-                    temp = root->right;
-                // if right child is empty, then the left child is the new root
-                else
-                    temp = root->left;
-                //if the node has no child then it is the leaf node
-                if (isEmpty(temp)) {
-                    temp = root;
-                    root = EMPTY_TREE;
-                }else
-                    *root = *temp;
-                delete temp;
-            } else {
-                //if the node has two children, get the inorder successor
-                AVLNode<K, V> temp = minValueNode(root->right);
-                root->key = temp->key;
-                root->value = temp->value;
-                root->right = deleteNode(root->right, temp->key);
-            }
-        }
-        //if the tree has only one node, return it
-        if (isEmpty(root))
-            return root;
-        //update the height of the current node
-        root->height = max(height(root->left), height(root->right)) + 1;
-
-        int balance = balanceFactor(root);
-
-        // in order to rebalance the tree, we need to check if the node is unbalanced,
-        //then we can apply the corresponding rotation to preserve the AVL property
-        //if the node is unbalanced, there are 4 cases
-
-        //this is the left left case
-        if (balance > 1 && balanceFactor(root->left) >= 0)
-            return rightRotate(root);
-
-        //this is the left right case
-        if (balance > 1 && balanceFactor(root->left) < 0) {
-            root->left = leftRotate(root->left);
-            return rightRotate(root);
-        }
-
-        //this is the right right case
-        if (balance < -1 && balanceFactor(root->right) <= 0)
-            return leftRotate(root);
-
-        //this is the right left case
-        if (balance < -1 && balanceFactor(root->right) > 0) {
-            root->right = rightRotate(root->right);
-            return leftRotate(root);
-        }
-
-        return root;
-    }
-
-
-
-    /**
-     * @brief This function converts the tree to a list-array
-     * @tparam K is the key of the node
-     * @tparam V is the value of the node
-     * @param t is the tree to be converted
-     * @param l is the list-array
-     */
-    template<typename K,typename V>
-    void auxToList(AVLNode<K,V>& t,list::List& l){
-        if (!isEmpty(t)) {
-            auxToList(t->left, l);
-            list::addBack(t->key, l);
-            auxToList(t->right, l);
-        }
-    }
-
-
-    /**
-     * @brief This function converts the tree to a list-array
-     * @tparam K is the key of the node
-     * @tparam V is the value of the node
-     * @param t is the tree to be converted
-     * @return a list-array
-     */
-    template<typename K,typename V>
-    list::List toList(AVLNode<K,V>& t) {
-        list::List l = list::createEmpty();
-        auxToList(t, l);
-        return l;
-    }
-
-    /**
-     * @brief This function performs an action on each node of the tree
-     * @tparam Key is the key of the node
-     * @tparam Value is the value of the node
-     * @tparam Action is the action to be performed on the node
-     * @param node is the current node
-     * @param action is the action to be performed
-     */
-    template <typename Key, typename Value,typename Action>
-    void performAction(AVLNode<Key, Value>& node, Action action) {
-        if (!node) return;
-        performAction(node->left, action);
-        action(node->key, node->value);
-        performAction(node->right, action);
     }
 }
 

@@ -142,7 +142,7 @@ namespace network{
      * @return true if the network is empty, false otherwise
      */
     bool isEmpty(const Network& net){ // 0(1)
-        // #members = 0 -> #creatorOf = 0 && #memberOf = 0 && #friends = 0 -> #groups = 0 -> net = empty
+        // (#members = 0 -> (((#creatorOf = 0 && #memberOf = 0 && #friends = 0) -> #groups = 0) -> net = empty))
         return isEmpty(net->members);
     }
 
@@ -260,20 +260,16 @@ namespace network{
         AVLNode<User_ID,User> user = search(net->members, usr_Log);
         if (!found(user)) // 0(log(n))
             return false;
-        // delete all groups created by the user
-        list::List creatorOfList = creatorOf(usr_Log, net); // 0(nlog(n))
-        for (int i = 0; i < creatorOfList.size; i++) // 0(nlog(n))
-            deleteGroup(get(i, creatorOfList), net);
-        // delete all friendships of the user
-        list::List friendsList = friends(usr_Log, net); // 0(nlog(n))
-        for (int i = 0; i < friendsList.size; i++) // 0(nlog(n))
-            leaveFriendship(usr_Log, get(i, friendsList), net);
+        auto iterateFriends = [&usr_Log](const std::string& key, User& user) -> void{
+            user->friends = remove(user->friends, usr_Log); // 0(log(n))
+        };
+        performAction(user->value->friends,iterateFriends); // 0(n)
         // delete all groups the user is in
         list::List memberOfList = memberOf(usr_Log, net); // 0(nlog(n))
         for (int i = 0; i < memberOfList.size; i++)// 0(nlog(n))
             leaveGroup(usr_Log, get(i, memberOfList), net);
         // delete the user
-        net->members = deleteNode(net->members, usr_Log); // 0(log(n))
+        net->members = remove(net->members, usr_Log); // 0(log(n))
         return true;
     }
 
@@ -289,7 +285,7 @@ namespace network{
         AVLNode<Group_ID, Group> group = search(net->groups, g_Name);
         if (!found(group))
             return false;
-        net->groups = deleteNode(net->groups, g_Name);
+        net->groups = remove(net->groups, g_Name);
         return true;
     }
 
@@ -308,8 +304,8 @@ namespace network{
         AVLNode<User_ID,User> user2 = search(net->members, usr_Log2);
         if(areEqual(usr_Log1,usr_Log2) || !found(user1) || !found(user2))
             return false;
-        user1->value->friends = deleteNode(user1->value->friends, usr_Log2);
-        user2->value->friends = deleteNode(user2->value->friends, usr_Log1);
+        user1->value->friends = remove(user1->value->friends, usr_Log2);
+        user2->value->friends = remove(user2->value->friends, usr_Log1);
         return true;
     }
 
@@ -328,7 +324,7 @@ namespace network{
             return false;
         if(areEqual(group->value->creator->user_Login,usr_Log))
             return deleteGroup(g_Name, net);
-        group->value->members = deleteNode(group->value->members, usr_Log);
+        group->value->members = remove(group->value->members, usr_Log);
         return true;
     }
 

@@ -24,7 +24,7 @@ namespace AVL {
     int balanceFactor(const AVLNode<K, V>& node);
 
     template<typename K, typename V>
-    AVLNode<K, V> deleteNode(AVLNode<K, V>& root, K key);
+    AVLNode<K, V> remove(AVLNode<K, V>& root, K key);
 
     template<typename K, typename V>
     void inOrder(const AVLNode<K, V>& root);
